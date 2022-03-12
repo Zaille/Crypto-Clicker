@@ -1,9 +1,18 @@
-import {Navbar} from "./components";
+import { Navbar, Popup, Footer } from "./components";
+import { Context } from "./context/Context";
+import { useContext } from "react";
 
 function App() {
+    const { bodyComponent, showPopup } = useContext(Context);
+
     return (
         <div>
-            <Navbar/>
+            { showPopup && <Popup /> }
+            <div className={`z-0${ showPopup ? " blur-md" : ""}`}>
+                <Navbar />
+                { bodyComponent }
+                <Footer />
+            </div>
         </div>
     );
 }
