@@ -1,31 +1,37 @@
 import React, {useEffect, useState} from "react";
 import Web3 from 'web3';
 import {Clicker, Dashboard, Collection, Shop, Welcome} from "../components";
+import Profiles from '../abis/Profiles.json'
+import log from "tailwindcss/lib/util/log";
 
 export const Context = React.createContext(undefined, undefined);
 
 export const ContextProvider = ({children}) => {
     const components = {
-        clicker : <Clicker />,
-        dashboard : <Dashboard />,
-        collection : <Collection />,
-        shop : <Shop />,
-        welcome : <Welcome />
+        clicker: <Clicker/>,
+        dashboard: <Dashboard/>,
+        collection: <Collection/>,
+        shop: <Shop/>,
+        welcome: <Welcome/>
     }
 
     const [currentAccount, setCurrentAccount] = useState(undefined);
-    const [bodyComponent, setBodyComponent] = useState(<Welcome />);
+    const [currentContract, setCurrentContract] = useState(undefined);
+    const [currentUser, setCurrentUser] = useState(undefined);
+    const [bodyComponent, setBodyComponent] = useState(<Welcome/>);
     const [showPopup, setShowPopup] = useState(false);
 
-    const switchComponent = (e) => { setBodyComponent(components[e.target.name]); }
-    const closePopup = () => { setShowPopup(false); }
+    const switchComponent = (e) => {
+        setBodyComponent(components[e.target.name]);
+    }
+    const closePopup = () => {
+        setShowPopup(false);
+    }
 
     const loadWeb3 = async () => {
         if (window.ethereum) {
-            console.log("la");
             window.Web3 = new Web3(window.ethereum);
         } else if (window.Web3) {
-            console.log("ici");
             window.Web3 = new Web3(window.Web3.currentProvider);
         } else {
             window.alert('Non-Ethereum browser detected. You should consider trying Metamask!');
@@ -33,10 +39,10 @@ export const ContextProvider = ({children}) => {
 
         const web3 = window.Web3;
         const accounts = await web3.eth.getAccounts();
-        if(accounts.length) setCurrentAccount(accounts[0]);
+        if (accounts.length) setCurrentAccount(accounts[0]);
 
         window.ethereum.on('accountsChanged', (accounts) => {
-            if( !showPopup ) closePopup();
+            if (!showPopup) closePopup();
             loadBlockChainData(accounts);
         });
     }
@@ -44,32 +50,28 @@ export const ContextProvider = ({children}) => {
     const loadBlockChainData = async (accounts) => {
         const web3 = window.Web3;
 
-        // Load account
         setCurrentAccount(accounts[0]);
 
-        /*if(accounts.length) {
-            // Network ID
+        if (accounts.length) {
             const networkId = await web3.eth.net.getId();
-            const networkData = SocialNetwork.networks[networkId];
+            const networkData = Profiles.networks[networkId];
             if (networkData) {
-                const socialNetwork = web3.eth.Contract(SocialNetwork.abi, networkData.address);
-                this.setState({socialNetwork});
-                const postCount = await socialNetwork.methods.postCount().call();
-                this.setState({postCount});
-                // Load posts
-                for (let i = 0; i <= postCount; i++) {
-                    const post = await socialNetwork.methods.posts(i).call();
-                    this.setState({
-                        posts: [...this.state.posts, post]
-                    });
+                const profiles = new web3.eth.Contract(Profiles.abi, networkData.address);
+                setCurrentContract(profiles);
+                let profile;
+                if (await profiles.methods.checkProfile().call({from: accounts[0]})) {
+                    profile = await profiles.methods.profileMap(accounts[0])
+                        .call();
+                } else { // TODO : Create Component to create a new profile
+                    const res = await profiles.methods.createProfile()
+                        .send({from: accounts[0]});
+                    profile = res.events.NewProfile.returnValues['profile'];
                 }
-
-                // Set loading to false
-                this.setState({loading: false});
+                setCurrentUser(profile);
             } else {
                 window.alert('SocialNetwork contract not deployed to detected network.');
             }
-        }*/
+        }
     }
 
     const connectWallet = async () => {
@@ -82,7 +84,8 @@ export const ContextProvider = ({children}) => {
     }, []);
 
     return (
-        <Context.Provider value={{switchComponent, connectWallet, bodyComponent, currentAccount, showPopup, closePopup }}>
+        <Context.Provider
+            value={{switchComponent, connectWallet, bodyComponent, currentContract, currentAccount, currentUser, setCurrentUser, showPopup, closePopup}}>
             {children}
         </Context.Provider>
     )
