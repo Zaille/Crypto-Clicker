@@ -2,7 +2,6 @@ import React, {useEffect, useState} from "react";
 import Web3 from 'web3';
 import {Clicker, Dashboard, Collection, Shop, Welcome} from "../components";
 import Profiles from '../abis/Profiles.json'
-import log from "tailwindcss/lib/util/log";
 
 export const Context = React.createContext(undefined, undefined);
 
@@ -16,6 +15,7 @@ export const ContextProvider = ({children}) => {
     }
 
     const [currentAccount, setCurrentAccount] = useState(undefined);
+    const [currentAmount, setCurrentAmount] = useState(undefined);
     const [currentContract, setCurrentContract] = useState(undefined);
     const [currentUser, setCurrentUser] = useState(undefined);
     const [bodyComponent, setBodyComponent] = useState(<Welcome/>);
@@ -39,7 +39,9 @@ export const ContextProvider = ({children}) => {
 
         const web3 = window.Web3;
         const accounts = await web3.eth.getAccounts();
-        if (accounts.length) setCurrentAccount(accounts[0]);
+        if (accounts.length) {
+            loadBlockChainData(accounts)
+        }
 
         window.ethereum.on('accountsChanged', (accounts) => {
             if (!showPopup) closePopup();
@@ -68,6 +70,7 @@ export const ContextProvider = ({children}) => {
                     profile = res.events.NewProfile.returnValues['profile'];
                 }
                 setCurrentUser(profile);
+                setCurrentAmount(0);
             } else {
                 window.alert('SocialNetwork contract not deployed to detected network.');
             }
@@ -85,7 +88,8 @@ export const ContextProvider = ({children}) => {
 
     return (
         <Context.Provider
-            value={{switchComponent, connectWallet, bodyComponent, currentContract, currentAccount, currentUser, setCurrentUser, showPopup, closePopup}}>
+            value={{switchComponent, connectWallet, bodyComponent, currentContract, currentAccount, currentUser,
+                setCurrentUser, currentAmount, setCurrentAmount, showPopup, closePopup}}>
             {children}
         </Context.Provider>
     )

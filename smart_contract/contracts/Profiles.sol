@@ -23,14 +23,14 @@ contract Profiles {
         emit NewProfile(profile);
     }
 
-    function checkProfile() public view returns(bool){
-        return profileMap[msg.sender].exists;
+    function addAmount(uint256 _amount) external {
+        require(checkProfile(), "The user doesn't exist.");
+        profileMap[msg.sender].amount += _amount;
+        emit NewProfile(profileMap[msg.sender]);
     }
 
-    function click() public {
-        require(checkProfile(), "The user doesn't exist.");
-        profileMap[msg.sender].amount += profileMap[msg.sender].earnClick;
-        emit NewProfile(profileMap[msg.sender]);
+    function checkProfile() public view returns(bool){
+        return profileMap[msg.sender].exists;
     }
 
 }

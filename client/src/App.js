@@ -11,7 +11,7 @@ function App() {
             <div className={`z-0${ showPopup ? " blur-md" : ""}`}>
                 <Navbar />
                 { bodyComponent }
-                <Footer />
+                {/*<Footer />*/}
             </div>
         </div>
     );
